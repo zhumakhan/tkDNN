@@ -12,11 +12,107 @@
 #include "NetworkRT.h"
 #include "Int8Calibrator.h"
 
+#include <NvInferRuntime.h>
 
 using namespace nvinfer1;
 
+
+
 extern std::mutex gYoloPlugins_mutex;
 extern std::vector<YoloRT*> gYoloPlugins;
+
+// class MyProfiler: public IProfiler{
+//     void reportLayerTime(const char * layerName, float ms) NOEXCEPT override {
+//         printf("\n%s took %fms\n", layerName, ms);
+//     }
+// } myProfiler;
+
+
+struct SimpleProfiler : public nvinfer1::IProfiler
+{
+    struct Record
+    {
+        float time{0};
+        int count{0};
+    };
+
+    virtual void reportLayerTime(const char* layerName, float ms) noexcept
+    {
+        mProfile[layerName].count++;
+        mProfile[layerName].time += ms;
+        if (std::find(mLayerNames.begin(), mLayerNames.end(), layerName) == mLayerNames.end())
+        {
+            mLayerNames.push_back(layerName);
+        }
+    }
+
+    SimpleProfiler(const char* name, const std::vector<SimpleProfiler>& srcProfilers = std::vector<SimpleProfiler>())
+        : mName(name)
+    {
+        for (const auto& srcProfiler : srcProfilers)
+        {
+            for (const auto& rec : srcProfiler.mProfile)
+            {
+                auto it = mProfile.find(rec.first);
+                if (it == mProfile.end())
+                {
+                    mProfile.insert(rec);
+                }
+                else
+                {
+                    it->second.time += rec.second.time;
+                    it->second.count += rec.second.count;
+                }
+            }
+        }
+    }
+
+    friend std::ostream& operator<<(std::ostream& out, const SimpleProfiler& value)
+    {
+        out << "========== " << value.mName << " profile ==========" << std::endl;
+        float totalTime = 0;
+        std::string layerNameStr = "TensorRT layer name";
+        int maxLayerNameLength = std::max(static_cast<int>(layerNameStr.size()), 70);
+        for (const auto& elem : value.mProfile)
+        {
+            totalTime += elem.second.time;
+            maxLayerNameLength = std::max(maxLayerNameLength, static_cast<int>(elem.first.size()));
+        }
+
+        auto old_settings = out.flags();
+        auto old_precision = out.precision();
+        // Output header
+        {
+            out << std::setfill(' ') << std::setw(maxLayerNameLength) << layerNameStr << " ";
+            out << std::setw(12) << "Runtime, "
+                << "%"
+                << " ";
+            out << std::setw(12) << "Invocations"
+                << " ";
+            out << std::setw(12) << "Runtime, ms" << std::endl;
+        }
+        for (size_t i = 0; i < value.mLayerNames.size(); i++)
+        {
+            const std::string layerName = value.mLayerNames[i];
+            auto elem = value.mProfile.at(layerName);
+            out << std::setw(maxLayerNameLength) << layerName << " ";
+            out << std::setw(12) << std::fixed << std::setprecision(1) << (elem.time * 100.0F / totalTime) << "%"
+                << " ";
+            out << std::setw(12) << elem.count << " ";
+            out << std::setw(12) << std::fixed << std::setprecision(2) << elem.time << std::endl;
+        }
+        out.flags(old_settings);
+        out.precision(old_precision);
+        out << "========== " << value.mName << " total runtime = " << totalTime << " ms ==========" << std::endl;
+
+        return out;
+    }
+
+private:
+    std::string mName;
+    std::vector<std::string> mLayerNames;
+    std::map<std::string, Record> mProfile;
+} myProfiler ("myProfiler");
 
 // Logger for info/warning/errors
 class Logger : public ILogger {
@@ -83,6 +179,7 @@ NetworkRT::NetworkRT(Network *net, const char *name) {
 #endif
 #if NV_TENSORRT_MAJOR >= 6
         if(net->int8 && builderRT->platformHasFastInt8()){
+            std::cout<<"\nINT8\n";
             // dtRT = DataType::kINT8;
             // builderRT->setInt8Mode(true);
             configRT->setFlag(BuilderFlag::kINT8);
@@ -118,6 +215,7 @@ NetworkRT::NetworkRT(Network *net, const char *name) {
 #if NV_TENSORRT_MAJOR >= 6
             if(net->int8 && builderRT->platformHasFastInt8())
             {
+                std::cout<<"\nINT8\n";
                 Ilay->setPrecision(DataType::kINT8);
             }
 #endif
@@ -176,7 +274,9 @@ NetworkRT::NetworkRT(Network *net, const char *name) {
     }
 
     std::cout<<"create execution context\n";
+
 	contextRT = engineRT->createExecutionContext();
+    contextRT->setProfiler(&myProfiler);
 
 	// input and output buffer pointers that we pass to the engine - the engine requires exactly IEngine::getNbBindings(),
 	std::cout<<"Input/outputs numbers: "<<engineRT->getNbBindings()<<"\n";
@@ -225,14 +325,21 @@ NetworkRT::~NetworkRT() {
 
 dnnType* NetworkRT::infer(dataDim_t &dim, dnnType* data) {
     int batches = dim.n;
+    std::cout<<"Batch size "<<batches<<std::endl;
     if(batches > getMaxBatchSize()) {
         FatalError("input batch size too large");
     }
 
     checkCuda(cudaMemcpyAsync(buffersRT[buf_input_idx], data, batches*input_dim.tot()*sizeof(dnnType), cudaMemcpyDeviceToDevice, stream));
+    clock_t start = clock();
+    contextRT->setEnqueueEmitsProfile(true);//this leads to lower latency. Why?
     contextRT->enqueue(batches, buffersRT, stream, nullptr);
-    checkCuda(cudaMemcpyAsync(output, buffersRT[buf_output_idx], batches*output_dim.tot()*sizeof(dnnType), cudaMemcpyDeviceToDevice, stream));
     checkCuda(cudaStreamSynchronize(stream));
+    double time_taken = ((double)(clock()-start))/1000;
+    std::cout<<"Time taken "<<time_taken<<" ms "<<std::endl;
+    // contextRT->reportToProfiler();
+    std::cout<<myProfiler<<std::endl;
+    checkCuda(cudaMemcpyAsync(output, buffersRT[buf_output_idx], batches*output_dim.tot()*sizeof(dnnType), cudaMemcpyDeviceToDevice, stream));
 
     dim = output_dim;
     dim.n = batches;

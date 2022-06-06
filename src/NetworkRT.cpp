@@ -118,7 +118,7 @@ private:
 class Logger : public ILogger {
     void log(Severity severity, const char* msg) NOEXCEPT override {
 #ifdef DEBUG
-        std::cout <<"TENSORRT LOG: "<< msg << std::endl;
+        std::cout <<"TENSORRT LOG: "  << msg << std::endl;
 #endif
     }
 } loggerRT;
@@ -276,7 +276,7 @@ NetworkRT::NetworkRT(Network *net, const char *name) {
     std::cout<<"create execution context\n";
 
 	contextRT = engineRT->createExecutionContext();
-    contextRT->setProfiler(&myProfiler);
+    // contextRT->setProfiler(&myProfiler);
 
 	// input and output buffer pointers that we pass to the engine - the engine requires exactly IEngine::getNbBindings(),
 	std::cout<<"Input/outputs numbers: "<<engineRT->getNbBindings()<<"\n";

@@ -145,7 +145,7 @@ int main() {
 	int inputIndex = engine->getBindingIndex("data"); 
     int outputIndex = engine->getBindingIndex("out");
 
-    float output[10];
+    float output[11];
 	// create GPU buffers and a stream
 	checkCuda(cudaMalloc(&buffers[inputIndex], 28*28*sizeof(float)));
 	checkCuda(cudaMalloc(&buffers[outputIndex], 10*sizeof(float)));

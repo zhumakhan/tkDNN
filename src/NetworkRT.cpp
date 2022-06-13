@@ -14,6 +14,8 @@
 
 #include <NvInferRuntime.h>
 
+#include "cuda_profiler_api.h"
+
 using namespace nvinfer1;
 
 
@@ -234,6 +236,7 @@ NetworkRT::NetworkRT(Network *net, const char *name) {
         //build tensorRT
         input->setName("out");
         networkRT->markOutput(*input);
+        std::cout<<"NUMBER OF LAYERS IN NETWORK : "<<networkRT->getNbLayers()<<std::endl;
 
         std::cout<<"Selected maxBatchSize: "<<builderRT->getMaxBatchSize()<<"\n";
         printCudaMemUsage();
@@ -317,6 +320,7 @@ NetworkRT::NetworkRT(Network *net, const char *name) {
     }
     checkCuda(cudaMalloc(&output, engineRT->getMaxBatchSize()*output_dim.tot()*sizeof(dnnType)));
 	checkCuda(cudaStreamCreate(&stream));
+
 }
 
 NetworkRT::~NetworkRT() {
@@ -331,15 +335,17 @@ dnnType* NetworkRT::infer(dataDim_t &dim, dnnType* data) {
     }
 
     checkCuda(cudaMemcpyAsync(buffersRT[buf_input_idx], data, batches*input_dim.tot()*sizeof(dnnType), cudaMemcpyDeviceToDevice, stream));
-    clock_t start = clock();
-    contextRT->setEnqueueEmitsProfile(true);//this leads to lower latency. Why?
+    // clock_t start = clock();
+    // contextRT->setEnqueueEmitsProfile(true);//this leads to lower latency. Why?
+    // cudaProfilerStart();
     contextRT->enqueue(batches, buffersRT, stream, nullptr);
-    checkCuda(cudaStreamSynchronize(stream));
-    double time_taken = ((double)(clock()-start))/1000;
-    std::cout<<"Time taken "<<time_taken<<" ms "<<std::endl;
+    // cudaProfilerStop(); 
+    // double time_taken = ((double)(clock()-start))/1000;
+    // std::cout<<"Time taken "<<time_taken<<" ms "<<std::endl;
     // contextRT->reportToProfiler();
-    std::cout<<myProfiler<<std::endl;
+    // std::cout<<myProfiler<<std::endl;
     checkCuda(cudaMemcpyAsync(output, buffersRT[buf_output_idx], batches*output_dim.tot()*sizeof(dnnType), cudaMemcpyDeviceToDevice, stream));
+    checkCuda(cudaStreamSynchronize(stream));
 
     dim = output_dim;
     dim.n = batches;

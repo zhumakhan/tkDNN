@@ -44,7 +44,8 @@ int testInference(std::vector<std::string> input_bins, std::vector<std::string> 
 
     if(netRT != nullptr) {
         tk::dnn::dataDim_t dim2 = net->input_dim;
-        printCenteredTitle(" TENSORRT inference ", '=', 30); {
+        printCenteredTitle(" TENSORRT inference ", '=', 30);
+        {
             dim2.print();
             TKDNN_TSTART
             netRT->infer(dim2, data);

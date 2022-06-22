@@ -101,7 +101,7 @@ struct SimpleProfiler : public nvinfer1::IProfiler
             out << std::setw(12) << std::fixed << std::setprecision(1) << (elem.time * 100.0F / totalTime) << "%"
                 << " ";
             out << std::setw(12) << elem.count << " ";
-            out << std::setw(12) << std::fixed << std::setprecision(2) << elem.time << std::endl;
+            out << std::setw(12) << std::fixed << std::setprecision(2) << "{"<<elem.time<<"}"<< std::endl;
         }
         out.flags(old_settings);
         out.precision(old_precision);
@@ -155,7 +155,7 @@ NetworkRT::NetworkRT(Network *net, const char *name) {
         configRT->setAvgTimingIterations(1);
         configRT->setMinTimingIterations(1);
         configRT->setMaxWorkspaceSize(1 << 30);
-        configRT->setFlag(BuilderFlag::kDEBUG);
+        // configRT->setFlag(BuilderFlag::kDEBUG);
 
 #endif
         //input and dataType
@@ -221,7 +221,7 @@ NetworkRT::NetworkRT(Network *net, const char *name) {
                 Ilay->setPrecision(DataType::kINT8);
             }
 #endif
-            Ilay->setName( (l->getLayerName() + std::to_string(i)).c_str() );
+            Ilay->setName( (l->getLayerName() + "_id:" + std::to_string(i)).c_str() );
 
             input = Ilay->getOutput(0);
             input->setName( (l->getLayerName() + std::to_string(i) + "_out").c_str() );
@@ -279,7 +279,7 @@ NetworkRT::NetworkRT(Network *net, const char *name) {
     std::cout<<"create execution context\n";
 
 	contextRT = engineRT->createExecutionContext();
-    // contextRT->setProfiler(&myProfiler);
+    contextRT->setProfiler(&myProfiler);
 
 	// input and output buffer pointers that we pass to the engine - the engine requires exactly IEngine::getNbBindings(),
 	std::cout<<"Input/outputs numbers: "<<engineRT->getNbBindings()<<"\n";
@@ -333,19 +333,28 @@ dnnType* NetworkRT::infer(dataDim_t &dim, dnnType* data) {
     if(batches > getMaxBatchSize()) {
         FatalError("input batch size too large");
     }
+    float * temp_ptr = (float*)malloc(255*26*26*sizeof(float));
 
     checkCuda(cudaMemcpyAsync(buffersRT[buf_input_idx], data, batches*input_dim.tot()*sizeof(dnnType), cudaMemcpyDeviceToDevice, stream));
-    // clock_t start = clock();
-    // contextRT->setEnqueueEmitsProfile(true);//this leads to lower latency. Why?
+    clock_t start = clock();
+    contextRT->setEnqueueEmitsProfile(true);//this leads to better speed, why?
     // cudaProfilerStart();
-    contextRT->enqueue(batches, buffersRT, stream, nullptr);
-    // cudaProfilerStop(); 
-    // double time_taken = ((double)(clock()-start))/1000;
-    // std::cout<<"Time taken "<<time_taken<<" ms "<<std::endl;
-    // contextRT->reportToProfiler();
-    // std::cout<<myProfiler<<std::endl;
-    checkCuda(cudaMemcpyAsync(output, buffersRT[buf_output_idx], batches*output_dim.tot()*sizeof(dnnType), cudaMemcpyDeviceToDevice, stream));
-    checkCuda(cudaStreamSynchronize(stream));
+    for(int i = 0; i < 1000; i++){
+        contextRT->enqueue(batches, buffersRT, stream, nullptr); 
+        // contextRT->reportToProfiler();
+        // std::cout<<myProfiler<<std::endl;
+        // checkCuda(cudaMemcpyAsync(output, buffersRT[buf_output_idx], batches*output_dim.tot()*sizeof(dnnType), cudaMemcpyDeviceToDevice, stream));
+        checkCuda(cudaMemcpyAsync(temp_ptr, buffersRT[buf_output_idx],  batches*output_dim.tot()*sizeof(dnnType), cudaMemcpyDeviceToHost, stream));
+        checkCuda(cudaStreamSynchronize(stream));
+    }
+    // contextRT->reportToProfiler(); //use it when contextRT->setEnqueueEmitsProfile(false);
+    cudaDeviceSynchronize();
+    // cudaProfilerStop();
+    double time_taken = ((double)(clock()-start))/1000;
+    std::cout<<"Time taken "<<time_taken<<" ms "<<std::endl;
+    std::cout<<myProfiler<<std::endl;
+
+    free(temp_ptr);
 
     dim = output_dim;
     dim.n = batches;
@@ -487,6 +496,9 @@ ILayer* NetworkRT::convert_layer(ITensor *input, Conv2d *l) {
         lRTconv->setStrideNd(Dims2{l->strideH, l->strideW});
         lRTconv->setPaddingNd(Dims2{l->paddingH, l->paddingW});
         lRTconv->setNbGroups(l->groups);
+        
+        // lRTconv->setName( (l->getLayerName() + "_id:").c_str() );
+        
         lRT = (ILayer*) lRTconv;
     } else {
         IDeconvolutionLayer *lRTconv = networkRT->addDeconvolutionNd(*input,

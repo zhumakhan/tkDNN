@@ -1,0 +1,197 @@
+Not supported field: batch=64
+Not supported field: subdivisions=1
+Not supported field: momentum=0.9
+Not supported field: decay=0.0005
+Not supported field: angle=0
+Not supported field: saturation = 1.5
+Not supported field: exposure = 1.5
+Not supported field: hue=.1
+Not supported field: learning_rate=0.00261
+Not supported field: burn_in=1000
+Not supported field: max_batches = 500200
+Not supported field: policy=steps
+Not supported field: steps=400000,450000
+Not supported field: scales=.1,.1
+New NETWORK (tkDNN v0.7, CUDNN v8.401)
+Reading weights: I=3 O=32 KERNEL=3x3x1
+Reading weights: I=32 O=64 KERNEL=3x3x1
+Reading weights: I=64 O=64 KERNEL=3x3x1
+Reading weights: I=32 O=32 KERNEL=3x3x1
+Reading weights: I=32 O=32 KERNEL=3x3x1
+Reading weights: I=64 O=64 KERNEL=1x1x1
+Reading weights: I=128 O=128 KERNEL=3x3x1
+Reading weights: I=64 O=64 KERNEL=3x3x1
+Reading weights: I=64 O=64 KERNEL=3x3x1
+Reading weights: I=128 O=128 KERNEL=1x1x1
+Reading weights: I=256 O=256 KERNEL=3x3x1
+Reading weights: I=128 O=128 KERNEL=3x3x1
+Reading weights: I=128 O=128 KERNEL=3x3x1
+Reading weights: I=256 O=256 KERNEL=1x1x1
+Reading weights: I=512 O=512 KERNEL=3x3x1
+Reading weights: I=512 O=256 KERNEL=1x1x1
+Reading weights: I=256 O=512 KERNEL=3x3x1
+Reading weights: I=512 O=255 KERNEL=1x1x1
+Not supported field: anchors = 10,14,  23,27,  37,58,  81,82,  135,169,  344,319
+Not supported field: jitter=.3
+Not supported field: cls_normalizer=1.0
+Not supported field: iou_normalizer=0.07
+Not supported field: iou_loss=ciou
+Not supported field: ignore_thresh = .7
+Not supported field: truth_thresh = 1
+Not supported field: random=0
+Reading weights: I=256 O=128 KERNEL=1x1x1
+Reading weights: I=384 O=256 KERNEL=3x3x1
+Reading weights: I=256 O=255 KERNEL=1x1x1
+Not supported field: anchors = 10,14,  23,27,  37,58,  81,82,  135,169,  344,319
+Not supported field: jitter=.3
+Not supported field: cls_normalizer=1.0
+Not supported field: iou_normalizer=0.07
+Not supported field: iou_loss=ciou
+Not supported field: ignore_thresh = .7
+Not supported field: truth_thresh = 1
+Not supported field: random=0
+
+====================== NETWORK MODEL ======================
+N.  Layer type       input (H*W,CH)        output (H*W,CH) 
+  0 Conv2d           416 x  416,    3  ->  208 x  208,   32
+  1 ActivationLeaky  208 x  208,   32  ->  208 x  208,   32
+  2 Conv2d           208 x  208,   32  ->  104 x  104,   64
+  3 ActivationLeaky  104 x  104,   64  ->  104 x  104,   64
+  4 Conv2d           104 x  104,   64  ->  104 x  104,   64
+  5 ActivationLeaky  104 x  104,   64  ->  104 x  104,   64
+  6 Route            104 x  104,   32  ->  104 x  104,   32
+  7 Conv2d           104 x  104,   32  ->  104 x  104,   32
+  8 ActivationLeaky  104 x  104,   32  ->  104 x  104,   32
+  9 Conv2d           104 x  104,   32  ->  104 x  104,   32
+ 10 ActivationLeaky  104 x  104,   32  ->  104 x  104,   32
+ 11 Route            104 x  104,   64  ->  104 x  104,   64
+ 12 Conv2d           104 x  104,   64  ->  104 x  104,   64
+ 13 ActivationLeaky  104 x  104,   64  ->  104 x  104,   64
+ 14 Route            104 x  104,  128  ->  104 x  104,  128
+ 15 Pooling          104 x  104,  128  ->   52 x   52,  128
+ 16 Conv2d            52 x   52,  128  ->   52 x   52,  128
+ 17 ActivationLeaky   52 x   52,  128  ->   52 x   52,  128
+ 18 Route             52 x   52,   64  ->   52 x   52,   64
+ 19 Conv2d            52 x   52,   64  ->   52 x   52,   64
+ 20 ActivationLeaky   52 x   52,   64  ->   52 x   52,   64
+ 21 Conv2d            52 x   52,   64  ->   52 x   52,   64
+ 22 ActivationLeaky   52 x   52,   64  ->   52 x   52,   64
+ 23 Route             52 x   52,  128  ->   52 x   52,  128
+ 24 Conv2d            52 x   52,  128  ->   52 x   52,  128
+ 25 ActivationLeaky   52 x   52,  128  ->   52 x   52,  128
+ 26 Route             52 x   52,  256  ->   52 x   52,  256
+ 27 Pooling           52 x   52,  256  ->   26 x   26,  256
+ 28 Conv2d            26 x   26,  256  ->   26 x   26,  256
+ 29 ActivationLeaky   26 x   26,  256  ->   26 x   26,  256
+ 30 Route             26 x   26,  128  ->   26 x   26,  128
+ 31 Conv2d            26 x   26,  128  ->   26 x   26,  128
+ 32 ActivationLeaky   26 x   26,  128  ->   26 x   26,  128
+ 33 Conv2d            26 x   26,  128  ->   26 x   26,  128
+ 34 ActivationLeaky   26 x   26,  128  ->   26 x   26,  128
+ 35 Route             26 x   26,  256  ->   26 x   26,  256
+ 36 Conv2d            26 x   26,  256  ->   26 x   26,  256
+ 37 ActivationLeaky   26 x   26,  256  ->   26 x   26,  256
+ 38 Route             26 x   26,  512  ->   26 x   26,  512
+ 39 Pooling           26 x   26,  512  ->   13 x   13,  512
+ 40 Conv2d            13 x   13,  512  ->   13 x   13,  512
+ 41 ActivationLeaky   13 x   13,  512  ->   13 x   13,  512
+ 42 Conv2d            13 x   13,  512  ->   13 x   13,  256
+ 43 ActivationLeaky   13 x   13,  256  ->   13 x   13,  256
+ 44 Conv2d            13 x   13,  256  ->   13 x   13,  512
+ 45 ActivationLeaky   13 x   13,  512  ->   13 x   13,  512
+ 46 Conv2d            13 x   13,  512  ->   13 x   13,  255
+ 47 Yolo              13 x   13,  255  ->   13 x   13,  255
+ 48 Route             13 x   13,  256  ->   13 x   13,  256
+ 49 Conv2d            13 x   13,  256  ->   13 x   13,  128
+ 50 ActivationLeaky   13 x   13,  128  ->   13 x   13,  128
+ 51 Upsample          13 x   13,  128  ->   26 x   26,  128
+ 52 Route             26 x   26,  384  ->   26 x   26,  384
+ 53 Conv2d            26 x   26,  384  ->   26 x   26,  256
+ 54 ActivationLeaky   26 x   26,  256  ->   26 x   26,  256
+ 55 Conv2d            26 x   26,  256  ->   26 x   26,  255
+ 56 Yolo              26 x   26,  255  ->   26 x   26,  255
+===========================================================
+
+N params: 6049888
+Max feature map size: 2768896
+N MACC: 3453938176
+
+GPU free memory: 3506.7 mb.
+New NetworkRT (TensorRT v8.25)
+Float16 support: 0
+Int8 support: 1
+DLAs: 0
+64762790
+create execution context
+Input/outputs numbers: 3
+input index = 0 -> output index = 2
+Data dim: 1 3 416 416 1
+Data dim: 1 255 26 26 1
+NUMBER OF LAYERS IN ENGINE : 54
+RtBuffer 0   dim: Data dim: 1 3 416 416 1
+RtBuffer 1   dim: Data dim: 1 255 13 13 1
+RtBuffer 2   dim: Data dim: 1 255 26 26 1
+
+===== TENSORRT inference ====
+Data dim: 1 3 416 416 1
+Batch size 1
+========== myProfiler profile ==========
+                                                   TensorRT layer name    Runtime, %  Invocations  Runtime, ms
+                                      (Unnamed Layer* 0) [Convolution]          0.8%            2         0.28
+                                                 PWN(ActivationLeaky1)          0.7%            2         0.23
+                                      (Unnamed Layer* 4) [Convolution]          1.7%            2         0.59
+                                                 PWN(ActivationLeaky3)          0.3%            2         0.12
+                                      (Unnamed Layer* 8) [Convolution]          1.9%            2         0.67
+                                                 PWN(ActivationLeaky5)          0.3%            2         0.12
+                                                                Route6         71.3%            2        25.18
+                                     (Unnamed Layer* 13) [Convolution]          0.7%            2         0.25
+                                                 PWN(ActivationLeaky8)          0.2%            2         0.06
+                                     (Unnamed Layer* 17) [Convolution]          0.7%            2         0.24
+                                                PWN(ActivationLeaky10)          0.2%            2         0.06
+                                     (Unnamed Layer* 22) [Convolution]          0.6%            2         0.20
+                                                PWN(ActivationLeaky13)          0.3%            2         0.12
+                                             ActivationLeaky5_out copy          0.4%            2         0.13
+                                                             Pooling15          0.5%            2         0.17
+                                     (Unnamed Layer* 28) [Convolution]          2.0%            2         0.71
+                                                PWN(ActivationLeaky17)          0.2%            2         0.06
+                                                               Route18          0.1%            2         0.04
+                                     (Unnamed Layer* 33) [Convolution]          0.6%            2         0.22
+                                                PWN(ActivationLeaky20)          0.1%            2         0.04
+                                     (Unnamed Layer* 37) [Convolution]          0.6%            2         0.22
+                                                PWN(ActivationLeaky22)          0.1%            2         0.04
+                                     (Unnamed Layer* 42) [Convolution]          0.5%            2         0.18
+                                                PWN(ActivationLeaky25)          0.2%            2         0.07
+                                            ActivationLeaky17_out copy          0.2%            2         0.08
+                                                             Pooling27          0.3%            2         0.09
+                                     (Unnamed Layer* 48) [Convolution]          2.3%            2         0.81
+                                                PWN(ActivationLeaky29)          0.1%            2         0.03
+                                                               Route30          0.1%            2         0.02
+                                     (Unnamed Layer* 53) [Convolution]          0.7%            2         0.24
+                                                PWN(ActivationLeaky32)          0.1%            2         0.02
+                                     (Unnamed Layer* 57) [Convolution]          0.7%            2         0.23
+                                                PWN(ActivationLeaky34)          0.1%            2         0.02
+                                     (Unnamed Layer* 62) [Convolution]          0.4%            2         0.15
+                                                PWN(ActivationLeaky37)          0.1%            2         0.04
+                                            ActivationLeaky29_out copy          0.1%            2         0.04
+                                            ActivationLeaky37_out copy          0.1%            2         0.04
+                                                             Pooling39          0.1%            2         0.05
+                                     (Unnamed Layer* 68) [Convolution]          2.4%            2         0.86
+                                                PWN(ActivationLeaky41)          0.1%            2         0.02
+                                     (Unnamed Layer* 72) [Convolution]          0.4%            2         0.15
+                                                PWN(ActivationLeaky43)          0.1%            2         0.02
+                                     (Unnamed Layer* 76) [Convolution]          1.3%            2         0.45
+                                                PWN(ActivationLeaky45)          0.1%            2         0.02
+                                                              Conv2d46          0.5%            2         0.17
+                                                                Yolo47          0.3%            2         0.10
+                                     (Unnamed Layer* 83) [Convolution]          0.2%            2         0.06
+                                                PWN(ActivationLeaky50)          0.0%            2         0.02
+                                                            Upsample51          0.1%            2         0.04
+                                                   Upsample51_out copy          0.1%            2         0.03
+                                     (Unnamed Layer* 89) [Convolution]          3.5%            2         1.24
+                                                PWN(ActivationLeaky54)          0.1%            2         0.03
+                                                              Conv2d55          0.4%            2         0.16
+                                                                Yolo56          0.3%            2         0.11
+========== myProfiler total runtime = 35.33 ms ==========
+
+Data dim: 1 255 26 26 1
+0

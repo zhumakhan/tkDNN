@@ -5,7 +5,6 @@
 #include "test.h"
 #include "DarknetParser.h"
 
-#define TKDNN_PATH "/home/nazir/Desktop/projects/tkDNN/"
 
 int main() {
     std::string bin_path  = "yolo4tiny";
@@ -27,7 +26,8 @@ int main() {
 
     //convert network to tensorRT
     tk::dnn::NetworkRT *netRT = new tk::dnn::NetworkRT(net, net->getNetworkRTName(bin_path.c_str()));
-    int ret = testInference(input_bins, output_bins, net, netRT);
+    int ret = 0;
+    ret = testInference(input_bins, output_bins, net, netRT);
     std::cout<<ret<<std::endl;
     net->releaseLayers();
     delete net;

@@ -13,6 +13,7 @@
 #include "Int8Calibrator.h"
 
 #include <NvInferRuntime.h>
+#include "NvInferPlugin.h"
 
 #include "cuda_profiler_api.h"
 
@@ -119,9 +120,9 @@ private:
 // Logger for info/warning/errors
 class Logger : public ILogger {
     void log(Severity severity, const char* msg) NOEXCEPT override {
-#ifdef DEBUG
+// #ifdef DEBUG
         std::cout <<"TENSORRT LOG: "  << msg << std::endl;
-#endif
+// #endif
     }
 } loggerRT;
 
@@ -155,7 +156,7 @@ NetworkRT::NetworkRT(Network *net, const char *name) {
         configRT->setAvgTimingIterations(1);
         configRT->setMinTimingIterations(1);
         configRT->setMaxWorkspaceSize(1 << 30);
-        // configRT->setFlag(BuilderFlag::kDEBUG);
+        configRT->setFlag(BuilderFlag::kDEBUG);
 
 #endif
         //input and dataType
@@ -248,6 +249,7 @@ NetworkRT::NetworkRT(Network *net, const char *name) {
         //engineRT = std::shared_ptr<nvinfer1::ICudaEngine>(builderRT->buildCudaEngine(*networkRT));
 #elif NV_TENSORRT_MAJOR >=8
         IHostMemory *serializedEngineRT = builderRT->buildSerializedNetwork(*networkRT,*configRT);
+        // engineRT = builderRT->buildEngineWithConfig(*networkRT, *configRT);
 
 #endif
 #if NV_TENSORRT_MAJOR > 5 && NV_TENSORRT_MAJOR < 8
@@ -271,12 +273,20 @@ NetworkRT::NetworkRT(Network *net, const char *name) {
 #endif
 
 #endif
-    } else {
+    } 
+    else {
         builderActive = false;
         deserialize(name);
     }
 
     std::cout<<"create execution context\n";
+    if(engineRT != nullptr){
+        std::cout<<"engineRT is not nullptr"<<std::endl;
+    }else{
+        std::cout<<"engineRT is nullptr"<<std::endl;
+    }
+
+    // bool didInitPlugins = initLibNvInferPlugins(&loggerRT, "");
 
 	contextRT = engineRT->createExecutionContext();
     contextRT->setProfiler(&myProfiler);
@@ -286,7 +296,7 @@ NetworkRT::NetworkRT(Network *net, const char *name) {
     if(engineRT->getNbBindings() > MAX_BUFFERS_RT)
         FatalError("over RT buffer array size");
 
-	// In order to bind the buffers, we need to know the names of the input and output tensors.
+    // In order to bind the buffers, we need to know the names of the input and output tensors.
 	// note that indices are guaranteed to be less than IEngine::getNbBindings()
 	buf_input_idx = engineRT->getBindingIndex("data");
     buf_output_idx = engineRT->getBindingIndex("out");
@@ -339,7 +349,7 @@ dnnType* NetworkRT::infer(dataDim_t &dim, dnnType* data) {
     clock_t start = clock();
     contextRT->setEnqueueEmitsProfile(true);//this leads to better speed, why?
     // cudaProfilerStart();
-    for(int i = 0; i < 1000; i++){
+    for(int i = 0; i < 1; i++){
         contextRT->enqueue(batches, buffersRT, stream, nullptr); 
         // contextRT->reportToProfiler();
         // std::cout<<myProfiler<<std::endl;
@@ -1132,7 +1142,10 @@ bool NetworkRT::deserialize(const char *filename) {
         gieModelStream = new char[size];
         file.read(gieModelStream, size);
         file.close();
+    }else{
+        std::cout<<"FILE IS NOT GOOD"<<std::endl;
     }
+    std::cout<<filename<<std::endl;
 
     runtimeRT = createInferRuntime(loggerRT);
 

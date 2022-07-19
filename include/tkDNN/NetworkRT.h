@@ -76,7 +76,7 @@ public:
         Do inference
     */
     dnnType* infer(dataDim_t &dim, dnnType* data);
-    void enqueue(int batchSize = 1);    
+    void enqueue(int batchSize = 1);
 
     nvinfer1::ILayer* convert_layer(nvinfer1::ITensor *input, Layer *l);
     nvinfer1::ILayer* convert_layer(nvinfer1::ITensor *input, Conv2d *l);
